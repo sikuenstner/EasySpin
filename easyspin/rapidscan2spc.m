@@ -24,7 +24,7 @@
 % Additionally, the input signal needs to be correctly quadrature phased, time
 % shifted to align with a cosine field modulation, and background corrected.
 
-function [dB,spc] = rapidscan2spc(M,rsAmp,rsFreq,g)
+function [dB,spc,A,B] = rapidscan2spc(M,rsAmp,rsFreq,g)
 
 %{
 This function implements the deconvolution method from
@@ -51,9 +51,9 @@ if ~isnumeric(M) || ~isvector(M)
   error('First input (rapid-scan signal) must be a vector.');
 end
 
-if isreal(M)
-  error('First input (rapid-scan signal) must contain both absorption and dispersion.');
-end
+% if isreal(M)
+%   error('First input (rapid-scan signal) must contain both absorption and dispersion.');
+% end
 
 M = M(:);
 N = numel(M);
@@ -93,12 +93,18 @@ Mph = M.*phf;
 fourierdeconv = @(idx) fftshift(fft(Mph(idx))./fft(phf(idx)));
 spc = fourierdeconv(1:N/2) + fourierdeconv(N/2+1:N);
 
+A = fourierdeconv(1:N/2);
+B = fourierdeconv(N/2+1:N);
+
 % Generate field axis and truncate to mod. amplitude range
 nu = fdaxis(t(1:N/2))/1e6; % Hz -> MHz
 dB = -unitconvert(nu,'MHz->mT',g);
 idx = abs(dB)<=rsAmp_mT/2;
 dB = dB(idx);
 spc = spc(idx);
+A = A(idx);
+B = B(idx);
+
 
 % Plotting
 %-------------------------------------------------------------------------------
